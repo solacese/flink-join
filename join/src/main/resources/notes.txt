@@ -1,0 +1,20 @@
+
+### Flink
+# download the not-so-latest Flink release:
+https://www.apache.org/dyn/closer.lua/flink/flink-1.20.2/flink-1.20.2-bin-scala_2.12.tgz
+
+# start the local server (it really will start just a single server process)
+./bin/start-cluster.sh
+
+# Flink UI is on port 8081 ... there should be no jobs
+
+# run the 'Join' Flink job with
+./bin/flink run <path>/join-1.0-SNAPSHOT.jar localhost:55554 default default default
+
+# now there should be one flink job, with 3 tasks
+
+# There's no timestamp in our test data, so Flink will operate on processing time.
+java -jar ./send-join-1.0-SNAPSHOT.jar localhost:55554 default default default
+
+# ... or with timestamps
+java -jar ./send-join-1.0-SNAPSHOT.jar localhost:55554 default default default true

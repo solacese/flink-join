@@ -1,0 +1,14 @@
+java -cp target/publisher.jar:/opt/java/java-client/lib/solace-messaging-client-1.8.0.jar:/opt/java/java-client/lib/sol-jcsmp-10.27.0.jar com.solace.demo.util.DirectPublisher localhost:55554 default default default
+
+ls /opt/java/java-client/lib/*.jar | tr '\n' ':' | sed 's/\/opt\/java\/java-client\/lib/\$SOLJ/g'
+#
+
+
+SOLJ=/opt/java/java-client/lib
+java -cp target/publisher.jar:$SOLJ/commons-logging-1.2.jar:$SOLJ/netty-codec-http-4.1.118.Final.jar:$SOLJ/netty-codec-socks-4.1.118.Final.jar:$SOLJ/netty-handler-4.1.118.Final.jar:$SOLJ/netty-handler-proxy-4.1.118.Final.jar:$SOLJ/netty-resolver-4.1.118.Final.jar:$SOLJ/netty-transport-4.1.118.Final.jar:$SOLJ/netty-transport-classes-epoll-4.1.118.Final.jar:$SOLJ/netty-transport-native-unix-common-4.1.118.Final.jar:$SOLJ/org.apache.servicemix.bundles.jzlib-1.1.3_2.jar:$SOLJ/org.osgi.annotation-6.0.0.jar:$SOLJ/sol-jcsmp-10.27.0.jar:$SOLJ/solace-messaging-client-1.8.0-javadoc.jar:$SOLJ/solace-messaging-client-1.8.0.jar  com.solace.demo.util.DirectPublisher localhost:55554 default default default
+
+
+# run the job
+JOB=/Users/rainer/src/flink/join/target/join-1.0-SNAPSHOT.jar
+
+./bin/flink -c $JOB
