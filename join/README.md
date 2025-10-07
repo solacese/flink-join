@@ -22,7 +22,7 @@ assuming you have a local broker with these values (cloud broker should work as 
 + edit `<flink_home>/config/config.yaml` and increase the numberOfTaskSlots: `numberOfTaskSlots: 6`
 + start the local server (it really will start just a single server process): `./bin/start-cluster.sh`
 + Flink UI is now on port 8081 ... there should be no jobs
-+ run the 'Join' Flink job with `./bin/flink -c com.solace.demo.flink.MessageJoinJob run <path>/join-1.0-SNAPSHOT.jar localhost:55554 default default default`
++ run the 'Join' Flink job with `./bin/flink run -c com.solace.demo.flink.MessageJoinJob <path>/join-1.0-SNAPSHOT.jar localhost:55554 default default default`
 + use the `com.solace.demo.flink.TSMessageJoinJob` job class for messages with timestamps
 Now there should be one flink job, with 3 tasks
 
