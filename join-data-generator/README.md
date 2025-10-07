@@ -18,7 +18,7 @@ Per default we have 100 keys and the message text simply has a counter to keep t
 
 ## Invocation: 
 No timestamps
-  `java -jar target/send-join-1.0-SNAPSHOT.jar localhost:55554 default default default`
+  `java -jar target/join-data-generator-1.0-SNAPSHOT.jar localhost:55554 default default default`
 
 With timestamps
-  `java -jar target/send-join-1.0-SNAPSHOT.jar localhost:55554 default default default yes`
+  `java -jar target/join-data-generator-1.0-SNAPSHOT.jar localhost:55554 default default default yes`
