@@ -16,7 +16,6 @@ import org.apache.flink.runtime.state.filesystem.FsStateBackend;
 // this is temporary workaround until the CoE has a sink
 import com.solace.demo.flink.sink.PSPSink;
 import com.solace.demo.flink.sink.PSPConnectionConfig;
-import com.solace.demo.flink.sink.TopicBuilder;
 
 import org.apache.flink.streaming.api.windowing.assigners.TumblingTimeWindows;
 import org.slf4j.Logger;
