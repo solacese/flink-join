@@ -40,9 +40,9 @@ public class DirectPublisher {
     private static final String SAMPLE_NAME = DirectPublisher.class.getSimpleName();
     private static final String TOPIC_PREFIX = "solace/samples/";  // used as the topic "root"
     private static final String API = "Java";
-    private static final int APPROX_MSG_RATE_PER_SEC = 1;
-    private static final int PAYLOAD_SIZE = 100;
-    private static final int MAX_KEYS = 100;
+    private static final int APPROX_MSG_RATE_PER_SEC = 2;
+    private static final int MAX_KEYS = 25;     // how many different keys
+    private static final int MAX_STREAMS = 3;   // number of topics = streams
     
     private static volatile int msgSentCounter = 0;                   // num messages sent
     private static volatile boolean isShutdown = false;
@@ -113,8 +113,8 @@ public class DirectPublisher {
         int[] counter = new int[MAX_KEYS];
 
         // messge template
-        final String message = "{\"key\": %d, \"message\":\"message # %d for key %d\"}";
-        final String tsmessage = "{\"key\": %d, \"message\":\"message # %d for key %d\", \"ts\": %d}";
+        final String tsmessage = "{\"key\": %d,\n \"message\":\"message # %d from stream %d for key %d\",\n \"ts\": %d}";
+        final String message = "{\"key\": %d,\n \"message\":\"message # %d from stream %d for key %d\"}";
 
         OutboundMessageBuilder messageBuilder = messagingService.messageBuilder();
         // block the main thread, waiting for a quit signal
@@ -122,14 +122,14 @@ public class DirectPublisher {
             try {
                 // each loop, change the payload, less trivial
                 key = (int) (Math.random() * MAX_KEYS);
-                dest_q = (int) (Math.random() * 2); // should be 0 or 1
+                dest_q = (int) (Math.random() * MAX_STREAMS); // should be 0, 1 ... < MAX_STREAMS
                 counter[key]++;
 
                 String msg; // insert values into message
                 if(useTimestamps)
-                    msg = String.format(tsmessage, key, counter[key], key, System.currentTimeMillis());
+                    msg = String.format(tsmessage, key, counter[key], dest_q, key, System.currentTimeMillis());
                 else
-                    msg = String.format(tsmessage, key, counter[key], key);
+                    msg = String.format(message, key, counter[key], dest_q, key);
 
                 System.out.println("message is " + msg);
                 OutboundMessage om = messageBuilder.build(msg.getBytes());

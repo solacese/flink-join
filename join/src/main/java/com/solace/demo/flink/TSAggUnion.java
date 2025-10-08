@@ -3,27 +3,31 @@ package com.solace.demo.flink;
 import com.solace.demo.flink.event.TimeRecordWithKey;
 import com.solace.demo.flink.event.TimeRecordWithKeyDeserializationSchema;
 import com.solace.demo.flink.event.TimeRecordWithKeySerializationSchema;
+import com.solace.demo.flink.function.TimeRecordAggregate;
 import com.solace.demo.flink.sink.PSPConnectionConfig;
 import com.solace.demo.flink.sink.PSPSink;
 import com.solacecoe.connectors.flink.streaming.SolaceStreamingSource;
 import org.apache.flink.api.common.RuntimeExecutionMode;
 import org.apache.flink.api.common.eventtime.SerializableTimestampAssigner;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
-import org.apache.flink.api.common.functions.JoinFunction;
 import org.apache.flink.runtime.state.filesystem.FsStateBackend;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.CheckpointConfig;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.streaming.api.windowing.assigners.TumblingTimeWindows;
+import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindows;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 
+/**
+ * please don't use, this is a half-baked experiment
+ */
+public class TSAggUnion {
+    private static final Logger LOG = LoggerFactory.getLogger(TSAggUnion.class);
 
-public class TSMessageJoinJob {
-    private static final Logger LOG = LoggerFactory.getLogger(TSMessageJoinJob.class);
+    private final long TUMBLE_WINDOW = 60;   // window size in seconds
 
     String hostname;
     String vpn;
@@ -44,36 +48,34 @@ public class TSMessageJoinJob {
 
         DataStream<TimeRecordWithKey> stream1 = getEventStream(env, "merge-1-q");
         DataStream<TimeRecordWithKey> stream2 = getEventStream(env, "merge-2-q");
+        DataStream<TimeRecordWithKey> stream3 = getEventStream(env, "merge-3-q");
 
-        final StringBuffer mergedMsg = new StringBuffer(1024);  // for assembling our joined text
+        DataStream<TimeRecordWithKey> aggStream1 = getTimeRecordWithKeyDataStream(stream1, "stream1");
+        DataStream<TimeRecordWithKey> aggStream2 = getTimeRecordWithKeyDataStream(stream1, "stream2");
+        DataStream<TimeRecordWithKey> aggStream3 = getTimeRecordWithKeyDataStream(stream1, "stream3");
 
-        DataStream<TimeRecordWithKey> outStream = stream1.join(stream2)
-                .where(TimeRecordWithKey::getKey)
-                .equalTo(TimeRecordWithKey::getKey)
-                .window(TumblingTimeWindows.of(Duration.ofSeconds(20)))
-                .apply(new JoinFunction<>() {
-                    @Override
-                    public TimeRecordWithKey join(TimeRecordWithKey rk1, TimeRecordWithKey rk2) {
-                        TimeRecordWithKey rk = new TimeRecordWithKey();
-                        rk.setKey(rk1.getKey());
-                        mergedMsg.setLength(0);
-                        mergedMsg.append("  msg 1:\n");
-                        mergedMsg.append(rk1.getMessage());
-                        mergedMsg.append("\n  msg 2:\n");
-                        mergedMsg.append(rk2.getMessage());
-                        mergedMsg.append('\n');
-                        rk.setMessage(mergedMsg.toString());
-                        LOG.info("I just merged records for key " + rk1.getKey());
-                        return rk;
-                    }
-                });
+        DataStream<TimeRecordWithKey> joinedInput = aggStream1.union(aggStream2).union(aggStream3);
+
+        DataStream<TimeRecordWithKey> outStream = getTimeRecordWithKeyDataStream(stream1, "stream3");
 
         // send things to Solace as well
         PSPSink<TimeRecordWithKey> solaceSink = getPSPSink(env);
         outStream.addSink(solaceSink);
 
         env.setRuntimeMode(RuntimeExecutionMode.AUTOMATIC);
-        env.execute("TSMessageJoinJob");
+        env.execute("TSMessageUnionJob");
+    }
+
+    private DataStream<TimeRecordWithKey> getTimeRecordWithKeyDataStream(
+            DataStream<TimeRecordWithKey> joinedInput,
+            String sname) {
+        DataStream<TimeRecordWithKey> outStream = joinedInput
+                .keyBy(value -> value.getKey())
+                .window(TumblingEventTimeWindows.of(Duration.ofSeconds(TUMBLE_WINDOW)))
+                .aggregate(new TimeRecordAggregate())
+                .name(sname)
+                .returns(TimeRecordWithKey.class);
+        return outStream;
     }
 
     /**
@@ -127,12 +129,12 @@ public class TSMessageJoinJob {
         PSPSink<TimeRecordWithKey> psink = new PSPSink<> (
                 config,
             new TimeRecordWithKeySerializationSchema(),
-                (TimeRecordWithKey rk) -> String.format("solace/samples/joined/%d", rk.getKey()));
+                (TimeRecordWithKey rk) -> String.format("solace/samples/aggunion/%d", rk.getKey()));
         return psink;
     }
 
     public static void main(String[] args) {
-        TSMessageJoinJob theJob = new TSMessageJoinJob();
+        TSAggUnion theJob = new TSAggUnion();
         theJob.hostname = "quantumofsolace:55554";
         theJob.vpn = "default";
         theJob.username = "default";
@@ -147,7 +149,7 @@ public class TSMessageJoinJob {
         if(args.length > 3)
             theJob.username = args[3];
 
-        theJob.checkPointLocation = "file:///tmp/checkpoint.flink";
+        theJob.checkPointLocation = "file:///tmp/checkpointU.flink";
 
         try {
             theJob.run();
