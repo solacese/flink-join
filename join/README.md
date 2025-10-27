@@ -24,6 +24,7 @@ assuming you have a local broker with these values (cloud broker should work as 
 + Flink UI is now on port 8081 ... there should be no jobs
 + run the 'Join' Flink job with `./bin/flink run -c com.solace.demo.flink.MessageJoinJob <path>/join-1.0-SNAPSHOT.jar localhost:55554 default default default`
 + use the `com.solace.demo.flink.TSJoin` job class for messages with timestamps
++ results for this will be published to the `solace/samples/joined/<key>` topic
 + use the `TSUnionAgg` class for the union+aggregator version; example: `./bin/flink run -c com.solace.demo.flink.TSUnionAgg ${HOME}/src/flink/flink-join/join/target/join-1.0-SNAPSHOT.jar localhost:55554 default default default`
 Now there should be one flink job, with 3 tasks. This will only work with timestamps.
 + Please ignore the `TSAggUnion` job; it's an experiment and doesn't work.

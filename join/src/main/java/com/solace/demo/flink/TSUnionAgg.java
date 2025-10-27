@@ -43,8 +43,6 @@ public class TSUnionAgg {
         env.getConfig().setAutoWatermarkInterval(1000L);
         env.setStateBackend(new FsStateBackend(checkPointLocation));
         env.enableCheckpointing(10000L);
-        env.getCheckpointConfig().enableExternalizedCheckpoints(
-                CheckpointConfig.ExternalizedCheckpointCleanup.RETAIN_ON_CANCELLATION);
 
         DataStream<TimeRecordWithKey> stream1 = getEventStream(env, "merge-1-q");
         DataStream<TimeRecordWithKey> stream2 = getEventStream(env, "merge-2-q");

@@ -41,8 +41,6 @@ public class MessageJoinJob {
         env.getConfig().setAutoWatermarkInterval(1000L);
         env.setStateBackend(new FsStateBackend(checkPointLocation));
         env.enableCheckpointing(10000L);
-        env.getCheckpointConfig().enableExternalizedCheckpoints(
-                CheckpointConfig.ExternalizedCheckpointCleanup.RETAIN_ON_CANCELLATION);
 
         DataStream<RecordWithKey> stream1 = getEventStream(env, "merge-1-q");
         DataStream<RecordWithKey> stream2 = getEventStream(env, "merge-2-q");
