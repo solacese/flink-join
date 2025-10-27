@@ -28,6 +28,8 @@ assuming you have a local broker with these values (cloud broker should work as 
 Now there should be one flink job, with 3 tasks. This will only work with timestamps.
 + Please ignore the `TSAggUnion` job; it's an experiment and doesn't work.
 
+Also please note that the following diagrams are correct, but don't correspond to our test data generator. I have not fixed that yet.
+
 ### Join
 Merges records from both input streams with matching keys via `join()`function. If there is more than one matching record in the other stream & time window, this will create **two** result records ... records with the same key are not merged by default.
 ![diagram of the join process](src/main/resources/flink-stream-join.png)
