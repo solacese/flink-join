@@ -29,10 +29,14 @@ Now there should be one flink job, with 3 tasks. This will only work with timest
 + Please ignore the `TSAggUnion` job; it's an experiment and doesn't work.
 
 ### Join
-Merges records from both input streams with matching keys via `join()`function. If there is more than one matching record in the other stream & time window, this will create _two_ result records ... records with the same key are not merged by default.
+Merges records from both input streams with matching keys via `join()`function. If there is more than one matching record in the other stream & time window, this will create **two** result records ... records with the same key are not merged by default.
+![diagram of the join process](src/main/resources/flink-stream-join.png)
+In this example, B-3 slipped outside our target time window and isn't included in this group of joined events.
 
 ### Union + Aggregator
 Different approach: first merge all input streams into a single stream via `union()` call and then perform a keyed aggregation. This works with more than two input streams.
+![diagram of the union plus aggregation process](src/main/resources/flink-stream-union-agg.png)
+Note that the **C** events got rolled into a single merged event here. Which may not be what you want.
 
 ## test data generator
 + jar file is `join-data-generator-1.0-SNAPSHOT.jar`
